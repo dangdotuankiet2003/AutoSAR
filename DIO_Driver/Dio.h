@@ -28,7 +28,10 @@ typedef uint8 ChannelId;
 #define DIO_GET_PORT_NUM(ChannelId) ((ChannelId) >> 4)
 
 /* Macro lấy Pin mask từ ChannelId (1 << PinNum) */
-#define DIO_GET_PIN_NUM(ChannelId) (1 << ((ChannelId) & 0x0F))
+#define DIO_GET_PIN_MASK(ChannelId) (1 << ((ChannelId) & 0x0F))
+
+/* Macro lấy số pin từ ChannelId (0-15) */
+#define DIO_GET_PIN_NUMBER(ChannelId) ((ChannelId) & 0x0F)
 
 /* Channel cho tất cả các chân trên GPIOA */
 #define DIO_CHANNEL_A0  0  /* Id = 0 */
@@ -90,7 +93,7 @@ typedef uint8 ChannelId;
  * @typedef: Dio_ChannelType
  * @brief:   Kiểu dữ liệu cho ID của kênh DIO
  * @details: Đây là ID số cho 1 kênh DIO cụ thể
- * @example: DIO_CHANNEL_BUTTON_PC4 ((Dio_ChannelType)0x04)
+ * @example: DIO_CHANNEL_C13 ((Dio_ChannelType)45) = 45
  */
 typedef uint8 Dio_ChannelType;
 
@@ -112,11 +115,10 @@ typedef uint8 Dio_PortType;
  *  .offset = 0,  
  *  .port = DIO_PORT_C }
  */
-
 typedef struct 
 {
     uint16 mask;      
-    uint8 offset;      /**<Độ dịch của bit đầu tiên trong nhóm */
+    uint8 offset;      /**< Độ dịch của bit đầu tiên trong nhóm */
     Dio_PortType port; 
 }Dio_ChannelGroupType;
 
@@ -130,112 +132,84 @@ typedef uint8 Dio_LevelType;
 
 /**
  * @typedef: Dio_PortLevelType
- * @brief: Kiểu dữ liệu cho mức logic(0/1) của cổng DIO vs 16 kênh
+ * @brief: Kiểu dữ liệu cho mức logic (0/1) của cổng DIO với 16 kênh
  * @details: Đây là kiểu biểu thị trạng thái của tất cả kênh trong 1 cổng
  * @example: Dio_PortLevelType ledValue = (buttonState == STD_HIGH) ? 0xFF : 0x00; 
  */
 typedef uint16 Dio_PortLevelType;
 
-
-
 ///////////////// FUNCTION DEFINITIONS ////////////////////
 
 /**
- * @typedef: Dio_ReadChannel
  * @brief: Hàm đọc mức logic của 1 kênh DIO
- * @details: Trả về trạng thái logic (STD_HIGH/STD_LOW) của kênh được chỉ định
- * @return Dio_LevelType: Mức logic của kênh
- * @example: 
- *   Dio_ChannelType buttonChannel = DIO_CHANNEL_BUTTON_PC4; // ID cho PC4
- *   Dio_LevelType buttonState = Dio_ReadChannel(buttonChannel); // Đọc trạng thái nút bấm
+ * @param[in] ChannelId: ID của kênh DIO cần đọc
+ * @return: Dio_LevelType: Mức logic của kênh (STD_HIGH hoặc STD_LOW)
+ * @details: Đọc trạng thái input của chân GPIO tương ứng với ChannelId
  */
 Dio_LevelType Dio_ReadChannel(Dio_ChannelType ChannelId);
 
 /**
- * @void: Dio_WriteChannel
  * @brief: Hàm ghi mức logic cho 1 kênh DIO
- * @details: Đặt trạng thái logic (STD_HIGH/STD_LOW) cho kênh được chỉ định
- * @param ChannelId: ID của kênh DIO cần ghi
- * @example:
- *   #define DIO_CHANNEL_LED_PB2 (Dio_ChannelType(0x02))
- *   Dio_ChannelType ledChannel = DIO_CHANNEL_LED_PB2; 
- *   Dio_WriteChannel(ledChannel, STD_HIGH);
+ * @param[in] ChannelId: ID của kênh DIO cần ghi
+ * @param[in] Level: Mức logic cần ghi (STD_HIGH hoặc STD_LOW)
+ * @details: Đặt trạng thái output của chân GPIO tương ứng
  */
 void Dio_WriteChannel(Dio_ChannelType ChannelId, Dio_LevelType Level);
 
 /**
- * @typedef: Dio_ReadPort
  * @brief: Hàm đọc trạng thái của 1 cổng DIO
- * @details: Trả về trạng thái logic (bitmask) của tất cả kênh trong cổng
- * @param PortId: ID của cổng DIO cần đọc
- * @return Dio_PortLevelType: Trạng thái của cổng
- * @example:
- *   Dio_PortType buttonPort = DIO_PORT_C;
- *   Dio_PortLevelType portState = Dio_ReadPort(buttonPort); 
- *   if (portState & 0x10){}
+ * @param[in] PortId: ID của cổng DIO cần đọc
+ * @return: Dio_PortLevelType: Trạng thái của cổng (bitmask 16 bit)
+ * @details: Đọc toàn bộ thanh ghi input của cổng GPIO
  */
 Dio_PortLevelType Dio_ReadPort(Dio_PortType PortId);
 
 /**
- * @typedef: Dio_WritePort
  * @brief: Hàm ghi trạng thái cho 1 cổng DIO
- * @details: Đặt trạng thái logic (bitmask) cho tất cả kênh đầu ra trong cổng
- * @example:
- *   Dio_PortType ledPort = DIO_PORT_B; 
- *   Dio_PortLevelType ledValue = 0xFF; 
- *   Dio_WritePort(ledPort, ledValue); 
+ * @param[in] PortId: ID của cổng DIO cần ghi
+ * @param[in] Level: Giá trị bitmask cần ghi (16 bit)
+ * @details: Ghi toàn bộ thanh ghi output của cổng GPIO
  */
 void Dio_WritePort(Dio_PortType PortId, Dio_PortLevelType Level);
 
 /**
- * @typedef: Dio_ReadChannelGroup
  * @brief: Hàm đọc trạng thái của nhóm kênh DIO
- * @details: Trả về trạng thái logic (bitmask) của các kênh liền kề trong nhóm
- * @param ChannelGroupIdPtr: Con trỏ đến cấu trúc nhóm kênh
- * @return Dio_PortLevelType: Trạng thái của nhóm kênh
- * @example:
- *   const Dio_ChannelGroupType sensorGroup = DIO_CHANNEL_GROUP_SENSOR_PC0_PC3; 
- *   Dio_PortLevelType groupState = Dio_ReadChannelGroup(&sensorGroup); 
- *   => 0x0101: PC0 & PC2 High, PC1 & PC3 Low
+ * @param[in] ChannelGroupIdPtr: Con trỏ đến cấu trúc nhóm kênh
+ * @return: Dio_PortLevelType: Trạng thái của nhóm kênh (bitmask dịch offset)
+ * @details: Đọc và mask giá trị từ cổng GPIO theo nhóm
  */
-Dio_PortLevelType Dio_ReadChannelGroup (const Dio_ChannelGroupType* ChannelGroupIdPtr);
+Dio_PortLevelType Dio_ReadChannelGroup(const Dio_ChannelGroupType* ChannelGroupIdPtr);
 
 /**
- * @typedef: Dio_WriteChannelGroup
  * @brief: Hàm ghi trạng thái cho nhóm kênh DIO
- * @details: Đặt trạng thái logic (bitmask) cho các kênh đầu ra liền kề trong nhóm
- * @param ChannelGroupIdPtr: Con trỏ đến cấu trúc nhóm kênh
- * @param Level: Giá trị bitmask cần ghi
- * @example:
- *   const Dio_ChannelGroupType ledGroup = DIO_CHANNEL_GROUP_SENSOR_PA0_PA3; 
- *   Dio_WriteChannelGroup(&ledGroup, 0x05); 
+ * @param[in] ChannelGroupIdPtr: Con trỏ đến cấu trúc nhóm kênh
+ * @param[in] Level: Giá trị bitmask cần ghi cho nhóm
+ * @details: Mask và ghi giá trị vào nhóm kênh trong cổng GPIO
  */
 void Dio_WriteChannelGroup(const Dio_ChannelGroupType* ChannelGroupIdPtr, Dio_PortLevelType Level);
 
 /**
- * @typedef: Dio_GetVersionInfo
  * @brief: Hàm lấy thông tin phiên bản của module DIO
- * @details: Ghi thông tin phiên bản (vendorID, moduleID, phiên bản phần mềm) vào con trỏ
+ * @param[out] VersionInfo: Con trỏ đến cấu trúc lưu thông tin phiên bản
+ * @details: Ghi vendorID, moduleID, và phiên bản phần mềm vào cấu trúc
  */
-void Dio_GetVersionInfo (Std_VersionInfoType* VersionInfo);
+void Dio_GetVersionInfo(Std_VersionInfoType* VersionInfo);
 
 /**
- * @typedef: Dio_FlipChannel
  * @brief: Hàm đảo trạng thái logic của 1 kênh DIO
- * @details: Đổi trạng thái kênh (HIGH thành LOW hoặc ngược lại) và trả về trạng thái sau đảo
+ * @param[in] ChannelId: ID của kênh DIO cần đảo
+ * @return: Dio_LevelType: Trạng thái sau khi đảo (STD_HIGH hoặc STD_LOW)
+ * @details: Đọc trạng thái hiện tại và đảo (HIGH -> LOW hoặc ngược lại)
  */
-Dio_LevelType Dio_FlipChannel (Dio_ChannelType ChannelId);
+Dio_LevelType Dio_FlipChannel(Dio_ChannelType ChannelId);
 
 /**
- * @typedef: Dio_MaskedWritePort
  * @brief: Hàm ghi trạng thái cho 1 số kênh đầu ra được chọn trong 1 cổng DIO
- * @details: Ghi trạng thái logic (bitmask) cho các kênh đầu ra được chọn bởi mask
- * @param Level: Giá trị 0/1 cho các bitmask của các kênh cần ghi 
- * @param Mask: Bitmask chọn các kênh để ghi giá trị
- * @example:
- *   Dio_PortType ledPort = DIO_PORT_B; 
- *   Dio_MaskedWritePort(ledPort, 0x05, 0x0F); //PA0,2 HIGH ; PA1,3 LOW
+ * @param[in] PortId: ID của cổng DIO cần ghi
+ * @param[in] Level: Giá trị bitmask cần ghi cho các kênh được chọn
+ * @param[in] Mask: Bitmask chọn các kênh để ghi
+ * @details: Mask và ghi giá trị vào cổng GPIO
  */
-void Dio_MaskedWritePort (Dio_PortType PortId,Dio_PortLevelType Level, Dio_PortLevelType Mask);
+void Dio_MaskedWritePort(Dio_PortType PortId, Dio_PortLevelType Level, Dio_PortLevelType Mask);
 
-#endif
+#endif /* DIO_H */
