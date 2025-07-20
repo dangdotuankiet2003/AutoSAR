@@ -22,11 +22,11 @@ int main(void)
 
     while (1)
     {
-        Dio_WriteChannel(DIO_CHANNEL_C13, STD_LOW);
-        Delay(8000000); 
+        // Dio_WriteChannel(DIO_CHANNEL_C13, STD_LOW);
+        // Delay(8000000); 
 
-        Dio_WriteChannel(DIO_CHANNEL_C13, STD_HIGH);
-        Delay(8000000); 
+        // Dio_WriteChannel(DIO_CHANNEL_C13, STD_HIGH);
+        // Delay(8000000); 
 
           Dio_FlipChannel(DIO_CHANNEL_C13); 
           Delay(8000000);
