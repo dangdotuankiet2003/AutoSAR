@@ -10,7 +10,7 @@
  */
 Dio_LevelType Dio_ReadChannel(Dio_ChannelType ChannelId){
     GPIO_TypeDef *Port = DIO_GET_PORT_FR_CHID(ChannelId);
-    uint16 Pin = DIO_GET_PIN_NUM(ChannelId);  /* Sử dụng DIO_GET_PIN_NUM để lấy mask pin */
+    uint16 Pin = DIO_GET_PIN_MASK(ChannelId);  /* Sử dụng DIO_GET_PIN_MASK để lấy bit mask pin */
 
     if(Port == NULL_PTR){
         return STD_LOW;
@@ -27,7 +27,7 @@ Dio_LevelType Dio_ReadChannel(Dio_ChannelType ChannelId){
  */
 void Dio_WriteChannel(Dio_ChannelType ChannelId, Dio_LevelType Level){
    GPIO_TypeDef *Port = DIO_GET_PORT_FR_CHID(ChannelId);
-   uint16 Pin = DIO_GET_PIN_NUM(ChannelId);  /* Sử dụng DIO_GET_PIN_NUM để lấy mask pin */
+   uint16 Pin = DIO_GET_PIN_MASK(ChannelId);  /* Sử dụng DIO_GET_PIN_MASK để lấy bit mask pin */
   
     if(Port == NULL_PTR){
         return;
@@ -67,7 +67,7 @@ void Dio_WritePort(Dio_PortType PortId, Dio_PortLevelType Level){
  * @return: Dio_PortLevelType: Trạng thái của nhóm kênh (bitmask dịch offset)
  * @details: Đọc và mask giá trị từ cổng GPIO theo nhóm
  */
-Dio_PortLevelType Dio_ReadChannelGroup (const Dio_ChannelGroupType* ChannelGroupIdPtr){
+Dio_PortLevelType Dio_ReadChannelGroup(const Dio_ChannelGroupType* ChannelGroupIdPtr){
    GPIO_TypeDef *Port = DIO_GET_PORT_FR_PORTID(ChannelGroupIdPtr->port);
    if(Port == NULL_PTR) return 0;
    uint16 portValue = GPIO_ReadInputData(Port);
@@ -86,8 +86,7 @@ void Dio_WriteChannelGroup(const Dio_ChannelGroupType* ChannelGroupIdPtr, Dio_Po
     if(Port == NULL_PTR) return;
     
     uint16_t portValue = GPIO_ReadInputData(Port);
-    // Xóa các bit trong nhóm, sau đó ghi giá trị mới vào trong nhóm kênh
-    portValue &= ~(ChannelGroupIdPtr->mask); // Reset tương ứng với các bit mask
+    portValue &= ~(ChannelGroupIdPtr->mask); /* Reset tương ứng với các bit mask */
     portValue |= ((Level << ChannelGroupIdPtr->offset) & (ChannelGroupIdPtr->mask));
     
     GPIO_Write(Port, portValue);
@@ -98,7 +97,7 @@ void Dio_WriteChannelGroup(const Dio_ChannelGroupType* ChannelGroupIdPtr, Dio_Po
  * @param[out] VersionInfo: Con trỏ đến cấu trúc lưu thông tin phiên bản
  * @details: Ghi vendorID, moduleID, và phiên bản phần mềm vào cấu trúc
  */
-void Dio_GetVersionInfo (Std_VersionInfoType* VersionInfo){
+void Dio_GetVersionInfo(Std_VersionInfoType* VersionInfo){
     if (VersionInfo == NULL_PTR) return;
 
     VersionInfo->moduleID = 0x0001;
@@ -116,7 +115,7 @@ void Dio_GetVersionInfo (Std_VersionInfoType* VersionInfo){
  */
 Dio_LevelType Dio_FlipChannel(Dio_ChannelType ChannelId){
     GPIO_TypeDef *Port = DIO_GET_PORT_FR_CHID(ChannelId);
-    uint16 Pin = DIO_GET_PIN_NUM(ChannelId);  /* Sử dụng DIO_GET_PIN_NUM để lấy mask pin */
+    uint16 Pin = DIO_GET_PIN_MASK(ChannelId);  /* Sử dụng DIO_GET_PIN_MASK để lấy bit mask pin */
 
     if(Port == NULL_PTR) return STD_LOW;
 
@@ -138,7 +137,7 @@ Dio_LevelType Dio_FlipChannel(Dio_ChannelType ChannelId){
  * @param[in] Mask: Bitmask chọn các kênh để ghi
  * @details: Mask và ghi giá trị vào cổng GPIO
  */
-void Dio_MaskedWritePort (Dio_PortType PortId, Dio_PortLevelType Level, Dio_PortLevelType Mask){
+void Dio_MaskedWritePort(Dio_PortType PortId, Dio_PortLevelType Level, Dio_PortLevelType Mask){
     GPIO_TypeDef *Port = DIO_GET_PORT_FR_PORTID(PortId);
 
     if(Port == NULL_PTR) return;
